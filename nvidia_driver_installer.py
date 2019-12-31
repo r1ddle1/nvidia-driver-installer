@@ -25,14 +25,15 @@ def execute_shell_command(command):
     return output
 
 
-def is_running_as_root():
+def elevate_privilages():
     output = execute_shell_command('whoami')
 
     if output == 'root\n':  # Why '\n'? Because execute_shell_command(command) returns output with '\n' at the end!
         return True
     else:
         elevate()
-        print("I have A  S  C  E  N  D  E  D")
+        if output == 'root\n':
+            print("I have A  S  C  E  N  D  E  D")
 
 
 def update_repositories(system_name):
