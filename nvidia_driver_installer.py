@@ -1,21 +1,20 @@
 import subprocess
 import os
 import re
+from elevate import elevate
 
 UBUNTU = 'Ubuntu'
 FEDORA = 'Fedora'
 MANJARO = 'Manjaro'
 
-def string_contains(toCheck, CheckAgainst):
-    return re.search(CheckAgainst,toCheck)
 
 def get_system_name():
     f = open("/usr/lib/os-release","r")
     OSData = f.readline()
     f.close()
-    if string_contains(OSData,"*Ubuntu*"):
+    if 'Ubuntu' in OSData:
         return UBUNTU
-    elif string_contains(OSData,"*Fedora*"):
+    elif 'Fedora' in OSData:
         return FEDORA
     else:
         return "Unknown"
@@ -32,7 +31,8 @@ def is_running_as_root():
     if output == 'root\n':  # Why '\n'? Because execute_shell_command(command) returns output with '\n' at the end!
         return True
     else:
-        return False
+        elevate()
+        print("I have A  S  C  E  N  D  E  D")
 
 
 def update_repositories(system_name):
