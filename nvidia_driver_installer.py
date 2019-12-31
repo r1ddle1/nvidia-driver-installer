@@ -37,7 +37,7 @@ def elevate_privilages():
         elevate()
         output = execute_shell_command('whoami')
         if output == 'root\n':
-            print("I have A  S  C  E  N  D  E  D")
+            print("I have A  S  C  E  N  D  E  D\n")
         else:
             exit()
 
