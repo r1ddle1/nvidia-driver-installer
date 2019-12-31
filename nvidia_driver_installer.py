@@ -26,14 +26,20 @@ def execute_shell_command(command):
 
 
 def elevate_privilages():
+
+    #IMPORTANT, REQUIRES PACKAGE ELEVATE
+
     output = execute_shell_command('whoami')
 
     if output == 'root\n':  # Why '\n'? Because execute_shell_command(command) returns output with '\n' at the end!
         return True
     else:
         elevate()
+        output = execute_shell_command('whoami')
         if output == 'root\n':
             print("I have A  S  C  E  N  D  E  D")
+        else:
+            exit()
 
 
 def update_repositories(system_name):
@@ -64,14 +70,7 @@ def get_available_drivers(system_name):
 
 
 def main():
-    is_root = is_running_as_root()
-    print("Running as root?: ", is_root)
-
-    if not is_root:
-        print("Error! Please run this program as root!")
-        exit(-1)
-    else:
-        print('Good! Program is running as root!')
+    elevate_privilages()
 
     print('WARNING! THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, '
     'EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, '
