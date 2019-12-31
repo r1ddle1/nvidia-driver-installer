@@ -6,17 +6,19 @@ UBUNTU = 'Ubuntu'
 FEDORA = 'Fedora'
 MANJARO = 'Manjaro'
 
+def string_contains(toCheck, CheckAgainst):
+    return re.search(CheckAgainst,toCheck)
+
 def get_system_name():
-    try:
-        output = execute_shell_command(['lsb_release', '-a'])
-        if UBUNTU in output:
-            return UBUNTU
-        elif FEDORA in output:
-            return FEDORA
-        elif MANJARO in output:
-            return MANJARO
-    except FileNotFoundError:
-        print("lsb_release not found. If you are on Fedora, install the redhat-lsb-core package")
+    f = open("/usr/lib/os-release","r")
+    OSData = f.readline()
+    f.close()
+    if string_contains(OSData,"*Ubuntu*"):
+        return UBUNTU
+    elif string_contains(OSData,"*Fedora*"):
+        return FEDORA
+    else:
+        return "Unknown"
 
 
 def execute_shell_command(command):
@@ -118,6 +120,8 @@ def main():
         update_repositories(system_name)
 
         print("We'll check for the RPMFusion repositories wich contain the drivers")
+
+        get_available_drivers(system_name)
 
         print('What NVIDIA card do you have?:')
         print('Type 1, for recent GeForce/Quadro/Tesla')
