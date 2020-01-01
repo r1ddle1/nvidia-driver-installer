@@ -8,13 +8,16 @@ MANJARO = 'Manjaro'
 
 def elevate():
     os.system("pkexec python3 $(readlink -f nv*)")
+
+
 def get_system_name():
-    f = open("/usr/lib/os-release","r")
-    OSData = f.readline()
+    f = open('/usr/lib/os-release', 'r')
+    os_data = f.readline()
     f.close()
-    if 'Ubuntu' in OSData:
+
+    if 'Ubuntu' in os_data:
         return UBUNTU
-    elif 'Fedora' in OSData:
+    elif 'Fedora' in os_data:
         return FEDORA
     else:
         return "Unknown"
@@ -26,9 +29,6 @@ def execute_shell_command(command):
 
 
 def elevate_privilages():
-
-    #IMPORTANT, REQUIRES PACKAGE ELEVATE
-
     output = execute_shell_command('whoami')
 
     if output == 'root\n':  # Why '\n'? Because execute_shell_command(command) returns output with '\n' at the end!
@@ -37,7 +37,7 @@ def elevate_privilages():
         elevate()
         output = execute_shell_command('whoami')
         if output == 'root\n':
-            print("I have A  S  C  E  N  D  E  D\n")
+            print('Now I\'m running as root.')
         else:
             exit()
 
@@ -49,12 +49,12 @@ def update_repositories(system_name):
         os.system('sudo dnf update')
     else:
         print("UNSUPPORTED SYSTEM!")
-        exit()
+        exit(-1)
 
 
 def get_available_drivers(system_name):
     if system_name == UBUNTU:
-        output = execute_shell_command(['apt','search', "NVIDIA driver metapackage"])
+        output = execute_shell_command(['apt', 'search', '"NVIDIA driver metapackage"'])
         drivers = []
         for i in range(len(output)):
             if output[i] == 'n' and output[i + 1] == 'v' \
@@ -63,8 +63,8 @@ def get_available_drivers(system_name):
         return drivers
     elif system_name == FEDORA:
         print("Checking RPMFusion-nvidia-nonfree")  # Check for RPMFusion NVIDIA repo, and install it if not found
-        execute_shell_command(["dnf", "install", "fedora-workstation-repositories"])
-        execute_shell_command(["dnf", "config-manager", "--set-enabled","rpmfusion-nonfree-nvidia-driver"])
+        execute_shell_command(['dnf', 'install', 'fedora-workstation-repositories'])
+        execute_shell_command(['dnf', 'config-manager', '--set-enabled', 'rpmfusion-nonfree-nvidia-driver'])
         # Now we should have RPMFusion installed and active
 
 
@@ -107,7 +107,7 @@ def main():
         print('Removing unnecesessary packages...')
         os.system('yes | sudo apt autoremove')
 
-        print('Okay. Installation finished. Please reboot your PC! Would you like to reboot your PC now? [y/n]')
+        print('Okay. Installation finished. Please reboot your PC! Would you like to reboot it now? [y/n]')
         answer = input()
 
         if answer == 'y':
@@ -133,20 +133,20 @@ def main():
         if card_type == 1:
             execute_shell_command(["dnf", "install", "akmod-nvidia"])
         elif card_type == 2:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
-            execute_shell_command(["dnf", "install", "xorg-x11-drv-nvidia-390xx","akmod-nvidia-390xx"])
+            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-390xx', 'akmod-nvidia-390xx'])
         elif card_type == 3:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
-            execute_shell_command(["dnf", "install", "xorg-x11-drv-nvidia-340xx","akmod-nvidia-340xx"])
+            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-340xx', 'akmod-nvidia-340xx'])
 
         print("Configuring boot splash(plymouth)")
 
         # After installing the drivers, you MUST make the drivers start at preboot (after GRUB) so the boot screen displays properly
 
-        execute_shell_command(["echo", "\"options nvidia_drm modeset=1\" ", ">>", "/etc/modprobe.d/nvidia.conf"])
-        execute_shell_command(["echo",
-                               "add_drivers+=\"nvidia nvidia_modeset nvidia_uvm nvidia_drm\"\ninstall_items+=\"/etc/modprobe.d/nvidia.conf\"", 
-                               ">>",
-                               "/etc/dracut.conf.d/nvidia.conf"])
-        execute_shell_command(["dracut", "-f"])
+        execute_shell_command(['echo', '"options nvidia_drm modeset=1"', '>>', '/etc/modprobe.d/nvidia.conf'])
+        execute_shell_command(['echo',
+                               'add_drivers+="nvidia nvidia_modeset nvidia_uvm nvidia_drm"\ninstall_items+="/etc/modprobe.d/nvidia.conf"',
+                               '>>',
+                               '/etc/dracut.conf.d/nvidia.conf'])
+        execute_shell_command(['dracut', '-f'])
 
         print('Okay. Installation finished. Please reboot your PC! Would you like to reboot your PC now? [y/n]')
 
