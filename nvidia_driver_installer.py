@@ -1,13 +1,13 @@
 import subprocess
 import os
 import re
-from elevate import elevate
 
 UBUNTU = 'Ubuntu'
 FEDORA = 'Fedora'
 MANJARO = 'Manjaro'
 
-
+def elevate():
+    os.system("pkexec python3 $(readlink -f nv*)")
 def get_system_name():
     f = open("/usr/lib/os-release","r")
     OSData = f.readline()
