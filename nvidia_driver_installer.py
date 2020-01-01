@@ -118,7 +118,7 @@ def main():
         update_repositories(system_name)
 
         print("We'll check for the RPMFusion repositories wich contain the drivers")
-
+        get_available_drivers(system_name)
         print('What NVIDIA card do you have?:')
         print('Type 1, for recent GeForce/Quadro/Tesla')
         print('Type 2 for legacy GeForce 400/500')
