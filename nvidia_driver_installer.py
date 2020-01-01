@@ -46,7 +46,7 @@ def update_repositories(system_name):
     if system_name == UBUNTU:
         os.system('sudo apt update')
     elif system_name == FEDORA:
-        os.system('sudo dnf update')
+        os.system('sudo dnf update -y')
     else:
         print("UNSUPPORTED SYSTEM!")
         exit(-1)
@@ -63,8 +63,8 @@ def get_available_drivers(system_name):
         return drivers
     elif system_name == FEDORA:
         print("Checking RPMFusion-nvidia-nonfree")  # Check for RPMFusion NVIDIA repo, and install it if not found
-        execute_shell_command(['dnf', 'install', 'fedora-workstation-repositories'])
-        execute_shell_command(['dnf', 'config-manager', '--set-enabled', 'rpmfusion-nonfree-nvidia-driver'])
+        execute_shell_command(['dnf', 'install', 'fedora-workstation-repositories', '-y'])
+        execute_shell_command(['dnf', 'config-manager', '--set-enabled', 'rpmfusion-nonfree-nvidia-driver', '-y'])
         # Now we should have RPMFusion installed and active
 
 
@@ -124,18 +124,18 @@ def main():
         get_available_drivers(system_name)
 
         print('What NVIDIA card do you have?:')
-        print('Type 1, for recent GeForce/Quadro/Tesla')
+        print('Type 1 for recent GeForce/Quadro/Tesla')
         print('Type 2 for legacy GeForce 400/500')
         print('Type 3 for Legacy GeForce 8/9/200/300')
         card_type = int(input())
 
         # Driver instalation
         if card_type == 1:
-            execute_shell_command(["dnf", "install", "akmod-nvidia"])
+            execute_shell_command(['dnf', 'install', 'akmod-nvidia', '-y'])
         elif card_type == 2:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
-            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-390xx', 'akmod-nvidia-390xx'])
+            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-390xx', 'akmod-nvidia-390xx', '-y'])
         elif card_type == 3:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
-            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-340xx', 'akmod-nvidia-340xx'])
+            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-340xx', 'akmod-nvidia-340xx', '-y'])
 
         print("Configuring boot splash(plymouth)")
 
