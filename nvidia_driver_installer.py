@@ -6,6 +6,7 @@ UBUNTU = 'Ubuntu'
 FEDORA = 'Fedora'
 MANJARO = 'Manjaro'
 
+
 def elevate():
     os.system("pkexec python3 $(readlink -f nv*)")
 
@@ -66,7 +67,6 @@ def get_available_drivers(system_name):
         execute_shell_command(['dnf', 'install', 'fedora-workstation-repositories', '-y'])
         execute_shell_command(['dnf', 'config-manager', '--set-enabled', 'rpmfusion-nonfree-nvidia-driver', '-y'])
         # Now we should have RPMFusion installed and active
-
 
 
 def main():
@@ -154,6 +154,10 @@ def main():
 
         if answer == 'y':
             os.system('reboot')
+
+    elif system_name == MANJARO:
+        # Literally one line of code. Do we need this?
+        execute_shell_command('sudo mhwd -a pci nonfree 0300')
 
     print('Thank you for using this software! Made by r1ddle & thonkdifferent')
 
