@@ -1,6 +1,5 @@
-import subprocess
 import os
-import re
+import subprocess
 
 UBUNTU = 'Ubuntu'
 FEDORA = 'Fedora'
@@ -16,12 +15,14 @@ def get_system_name():
     os_data = f.readline()
     f.close()
 
-    if 'Ubuntu' in os_data:
+    if UBUNTU in os_data:
         return UBUNTU
-    elif 'Fedora' in os_data:
+    elif FEDORA in os_data:
         return FEDORA
+    elif MANJARO in os_data:
+        return MANJARO
     else:
-        return "Unknown"
+        return 'Unknown'
 
 
 def execute_shell_command(command):
@@ -29,7 +30,7 @@ def execute_shell_command(command):
     return output
 
 
-def elevate_privilages():
+def elevate_privileges():
     output = execute_shell_command('whoami')
 
     if output == 'root\n':  # Why '\n'? Because execute_shell_command(command) returns output with '\n' at the end!
@@ -59,7 +60,7 @@ def get_available_drivers(system_name):
         drivers = []
         for i in range(len(output)):
             if output[i] == 'n' and output[i + 1] == 'v' \
-            and output[i + 2] == 'i' and output[i + 3] == 'd':
+                    and output[i + 2] == 'i' and output[i + 3] == 'd':
                 drivers.append(output[i:i + 17])  # 17 - length of nvidia-driver-XXX
         return drivers
     elif system_name == FEDORA:
@@ -70,13 +71,14 @@ def get_available_drivers(system_name):
 
 
 def main():
-    elevate_privilages()
+    elevate_privileges()
 
     print('WARNING! THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, '
-    'EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, '
-    'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT '
-    'HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, '
-    'TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.')
+          'EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, '
+          'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT '
+          'HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, '
+          'TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN '
+          'THE SOFTWARE.')
 
     answer = input('Continue? [y/n]\n')
 
@@ -104,7 +106,7 @@ def main():
         selected_driver = int(input()) - 1
         os.system('yes | ' + 'sudo apt install ' + available_drivers[selected_driver])
 
-        print('Removing unnecesessary packages...')
+        print('Removing unnecessary packages...')
         os.system('yes | sudo apt autoremove')
 
         print('Okay. Installation finished. Please reboot your PC! Would you like to reboot it now? [y/n]')
@@ -115,11 +117,11 @@ def main():
 
     elif system_name == FEDORA:
         print('Looks like you\'re using Fedora.')
-        print('Let\'s update your repositories!\n\n')
+        print('Let\'s update your repositories!\n')
 
         update_repositories(system_name)
 
-        print("We'll check for the RPMFusion repositories wich contain the drivers")
+        print("We'll check for the RPMFusion repositories which contain the drivers")
 
         get_available_drivers(system_name)
 
@@ -129,7 +131,7 @@ def main():
         print('Type 3 for Legacy GeForce 8/9/200/300')
         card_type = int(input())
 
-        # Driver instalation
+        # Driver installation
         if card_type == 1:
             execute_shell_command(['dnf', 'install', 'akmod-nvidia', '-y'])
         elif card_type == 2:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
@@ -139,11 +141,13 @@ def main():
 
         print("Configuring boot splash(plymouth)")
 
-        # After installing the drivers, you MUST make the drivers start at preboot (after GRUB) so the boot screen displays properly
+        # After installing the drivers, you MUST make the drivers start at preboot (after GRUB) so the boot screen
+        # displays properly
 
         execute_shell_command(['echo', '"options nvidia_drm modeset=1"', '>>', '/etc/modprobe.d/nvidia.conf'])
         execute_shell_command(['echo',
-                               'add_drivers+="nvidia nvidia_modeset nvidia_uvm nvidia_drm"\ninstall_items+="/etc/modprobe.d/nvidia.conf"',
+                               'add_drivers+="nvidia nvidia_modeset nvidia_uvm '
+                               'nvidia_drm"\ninstall_items+="/etc/modprobe.d/nvidia.conf"',
                                '>>',
                                '/etc/dracut.conf.d/nvidia.conf'])
         execute_shell_command(['dracut', '-f'])
@@ -157,7 +161,8 @@ def main():
 
     elif system_name == MANJARO:
         # Literally one line of code. Do we need this?
-        execute_shell_command('sudo mhwd -a pci nonfree 0300')
+        print('Looks like you\'re using Manjaro!')
+        os.system('mhwd -a pci nonfree 0300')
 
     print('Thank you for using this software! Made by r1ddle & thonkdifferent')
 

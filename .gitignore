@@ -4,3 +4,5 @@ dist/
 nvidia_driver_installer.spec
 .vscode/
 .history/
+.idea/
+venv/
