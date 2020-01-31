@@ -4,6 +4,7 @@ import subprocess
 UBUNTU = 'Ubuntu'
 FEDORA = 'Fedora'
 MANJARO = 'Manjaro'
+MINT = 'Linux Mint'
 
 
 def elevate():
@@ -21,23 +22,30 @@ def get_system_name():
         return FEDORA
     elif MANJARO in os_data:
         return MANJARO
+    elif MINT in os_data:
+        return MINT
     else:
         return 'Unknown'
 
 
-def execute_shell_command(command):
-    output = subprocess.check_output(command, encoding='UTF-8')
-    return output
+def exec_bash(command):
+    output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if output.returncode != 0:
+        print('Failed to execute', command)
+        exit(-1)
+
+    return output.stdout.decode('utf-8')
 
 
 def elevate_privileges():
-    output = execute_shell_command('whoami')
+    output = exec_bash('whoami')
 
-    if output == 'root\n':  # Why '\n'? Because execute_shell_command(command) returns output with '\n' at the end!
+    if output == 'root\n':  # Why '\n'? Because exec_bash(command) returns output with '\n' at the end!
         return True
     else:
         elevate()
-        output = execute_shell_command('whoami')
+        output = exec_bash('whoami')
         if output == 'root\n':
             print('Now I\'m running as root.')
         else:
@@ -45,10 +53,10 @@ def elevate_privileges():
 
 
 def update_repositories(system_name):
-    if system_name == UBUNTU:
-        os.system('sudo apt update')
+    if system_name == UBUNTU or system_name == MINT:
+        subprocess.run(['sudo', 'apt', 'update'])
     elif system_name == FEDORA:
-        os.system('sudo dnf update -y')
+        subprocess.run(['sudo', 'dnf' 'update', '-y'])
     else:
         print("UNSUPPORTED SYSTEM!")
         exit(-1)
@@ -56,17 +64,26 @@ def update_repositories(system_name):
 
 def get_available_drivers(system_name):
     if system_name == UBUNTU:
-        output = execute_shell_command(['apt', 'search', '"NVIDIA driver metapackage"'])
-        drivers = []
+        output = exec_bash(['apt', 'search', '"NVIDIA driver metapackage"'])
+        drivers = list()
         for i in range(len(output)):
             if output[i] == 'n' and output[i + 1] == 'v' \
                     and output[i + 2] == 'i' and output[i + 3] == 'd':
                 drivers.append(output[i:i + 17])  # 17 - length of nvidia-driver-XXX
         return drivers
+    elif system_name == MINT:
+        output = exec_bash(['apt', 'search', 'nvidia-driver-'])
+        drivers = list()
+        for i in range(len(output)):
+            if output[i:i + 13] == 'nvidia-driver' and output[i + 18] == ' ':
+                drivers.append(output[i:i + 17])
+                print('found at pos:', i)
+        return drivers
+
     elif system_name == FEDORA:
         print("Checking RPMFusion-nvidia-nonfree")  # Check for RPMFusion NVIDIA repo, and install it if not found
-        execute_shell_command(['dnf', 'install', 'fedora-workstation-repositories', '-y'])
-        execute_shell_command(['dnf', 'config-manager', '--set-enabled', 'rpmfusion-nonfree-nvidia-driver', '-y'])
+        exec_bash(['dnf', 'install', 'fedora-workstation-repositories', '-y'])
+        exec_bash(['dnf', 'config-manager', '--set-enabled', 'rpmfusion-nonfree-nvidia-driver', '-y'])
         # Now we should have RPMFusion installed and active
 
 
@@ -88,10 +105,10 @@ def main():
 
     system_name = get_system_name()
 
-    if system_name == UBUNTU:
-        print('Looks like you\'ve installed Ubuntu\n\n')
+    print('Looks like you\'re using', system_name)
 
-        print('Let\'s update your repositories!\n\n')
+    if system_name == UBUNTU or system_name == MINT:
+        print('Let\'s update your repositories!\n')
         update_repositories(system_name)
 
         print('All right! Let\'s find some nvidia drivers...')
@@ -116,7 +133,6 @@ def main():
             os.system('reboot')
 
     elif system_name == FEDORA:
-        print('Looks like you\'re using Fedora.')
         print('Let\'s update your repositories!\n')
 
         update_repositories(system_name)
@@ -133,24 +149,24 @@ def main():
 
         # Driver installation
         if card_type == 1:
-            execute_shell_command(['dnf', 'install', 'akmod-nvidia', '-y'])
+            exec_bash(['dnf', 'install', 'akmod-nvidia', '-y'])
         elif card_type == 2:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
-            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-390xx', 'akmod-nvidia-390xx', '-y'])
+            exec_bash(['dnf', 'install', 'xorg-x11-drv-nvidia-390xx', 'akmod-nvidia-390xx', '-y'])
         elif card_type == 3:  # Possibly broken, no way to test due to missing hardware (aka, I dont have an old GPU)
-            execute_shell_command(['dnf', 'install', 'xorg-x11-drv-nvidia-340xx', 'akmod-nvidia-340xx', '-y'])
+            exec_bash(['dnf', 'install', 'xorg-x11-drv-nvidia-340xx', 'akmod-nvidia-340xx', '-y'])
 
         print("Configuring boot splash(plymouth)")
 
         # After installing the drivers, you MUST make the drivers start at preboot (after GRUB) so the boot screen
         # displays properly
 
-        execute_shell_command(['echo', '"options nvidia_drm modeset=1"', '>>', '/etc/modprobe.d/nvidia.conf'])
-        execute_shell_command(['echo',
-                               'add_drivers+="nvidia nvidia_modeset nvidia_uvm '
-                               'nvidia_drm"\ninstall_items+="/etc/modprobe.d/nvidia.conf"',
-                               '>>',
-                               '/etc/dracut.conf.d/nvidia.conf'])
-        execute_shell_command(['dracut', '-f'])
+        exec_bash(['echo', '"options nvidia_drm modeset=1"', '>>', '/etc/modprobe.d/nvidia.conf'])
+        exec_bash(['echo',
+                   'add_drivers+="nvidia nvidia_modeset nvidia_uvm '
+                   'nvidia_drm"\ninstall_items+="/etc/modprobe.d/nvidia.conf"',
+                   '>>',
+                   '/etc/dracut.conf.d/nvidia.conf'])
+        exec_bash(['dracut', '-f'])
 
         print('Okay. Installation finished. Please reboot your PC! Would you like to reboot your PC now? [y/n]')
 
@@ -161,7 +177,6 @@ def main():
 
     elif system_name == MANJARO:
         # Literally one line of code. Do we need this?
-        print('Looks like you\'re using Manjaro!')
         os.system('mhwd -a pci nonfree 0300')
 
     print('Thank you for using this software! Made by r1ddle & thonkdifferent')
